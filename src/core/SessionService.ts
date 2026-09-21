@@ -1,3 +1,4 @@
+import axios from 'axios';
 import type { AnalysisResult } from './AnalysisEngine';
 
 export interface SavedSession {
@@ -8,43 +9,47 @@ export interface SavedSession {
     analysis: AnalysisResult;
 }
 
+const API_URL = 'https://vinotes-backend-k1n3.onrender.com';
+
 export class SessionService {
-    private static KEY = 'vi_notes_sessions';
 
-    static getSessions(userId: string): SavedSession[] {
-        const all = localStorage.getItem(this.KEY);
+    static async getSessions(userId: string): Promise<SavedSession[]> {
+        const response = await axios.get(
+            `${API_URL}/api/sessions/${userId}`
+        );
 
-        if (!all) return [];
-
-        const sessions: SavedSession[] = JSON.parse(all);
-
-        return sessions
-            .filter((session) => session.userId === userId)
-            .sort((a, b) => b.date - a.date);
+        return response.data.map((session: any) => ({
+            id: session._id,
+            userId: session.userId,
+            date: new Date(session.createdAt).getTime(),
+            text: session.text,
+            analysis: session.analysis
+        }));
     }
 
-    static saveSession(
+    static async saveSession(
         userId: string,
         text: string,
         analysis: AnalysisResult
-    ): SavedSession {
+    ): Promise<SavedSession> {
 
-        const all = localStorage.getItem(this.KEY);
+        const response = await axios.post(
+            `${API_URL}/api/sessions`,
+            {
+                userId,
+                text,
+                analysis
+            }
+        );
 
-        const sessions: SavedSession[] = all ? JSON.parse(all) : [];
+        const session = response.data;
 
-        const session: SavedSession = {
-            id: Date.now().toString(36) + Math.random().toString(36).substring(2),
-            userId,
-            date: Date.now(),
-            text,
-            analysis
+        return {
+            id: session._id,
+            userId: session.userId,
+            date: new Date(session.createdAt).getTime(),
+            text: session.text,
+            analysis: session.analysis
         };
-
-        sessions.push(session);
-
-        localStorage.setItem(this.KEY, JSON.stringify(sessions));
-
-        return session;
     }
 }
