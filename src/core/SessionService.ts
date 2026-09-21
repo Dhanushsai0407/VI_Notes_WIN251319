@@ -13,14 +13,26 @@ export class SessionService {
 
     static getSessions(userId: string): SavedSession[] {
         const all = localStorage.getItem(this.KEY);
+
         if (!all) return [];
+
         const sessions: SavedSession[] = JSON.parse(all);
-        return sessions.filter((s: SavedSession) => s.userId === userId).sort((a: SavedSession, b: SavedSession) => b.date - a.date);
+
+        return sessions
+            .filter((session) => session.userId === userId)
+            .sort((a, b) => b.date - a.date);
     }
 
-    static saveSession(userId: string, text: string, analysis: AnalysisResult): SavedSession {
+    static saveSession(
+        userId: string,
+        text: string,
+        analysis: AnalysisResult
+    ): SavedSession {
+
         const all = localStorage.getItem(this.KEY);
+
         const sessions: SavedSession[] = all ? JSON.parse(all) : [];
+
         const session: SavedSession = {
             id: Date.now().toString(36) + Math.random().toString(36).substring(2),
             userId,
@@ -28,8 +40,11 @@ export class SessionService {
             text,
             analysis
         };
+
         sessions.push(session);
+
         localStorage.setItem(this.KEY, JSON.stringify(sessions));
+
         return session;
     }
 }
