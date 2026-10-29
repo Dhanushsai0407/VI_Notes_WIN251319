@@ -38,7 +38,6 @@ export class AnalysisEngine {
         const deleteCount = deleteStrokes.length;
         const pasteEvents = pasteStrokes.length;
         const pastedChars = pasteStrokes.reduce((acc, k) => acc + (k.pasteLength || 0), 0);
-        const totalChars = typedChars + pastedChars;
 
         // Accurate CPM Calculation: requires at least 8 strokes and at least 3 seconds duration
         let cpm = 0;
@@ -68,41 +67,10 @@ export class AnalysisEngine {
         const totalEdits = typedChars + deleteCount;
         const revisionRatio = totalEdits > 0 ? (deleteCount / totalEdits) * 100 : 0;
 
-        // Human Likelihood Scoring Logic
-        let score = 100;
-
-        if (pastedChars === 0) {
-            // When user generally types, give 100%
-            score = 100;
-
-            // Only adjust if physically impossible automated bot injection (> 600 CPM)
-            if (typedChars >= 30 && cpm > 600) {
-                score = Math.max(70, 100 - Math.round((cpm - 600) / 10));
-            }
-        } else {
-            // Scales based on pasted characters:
-            // - <= 300 chars: scales down from 100% to 50%
-            // - > 300 chars: starts from 50% down to 10% at 10,000 chars
-            // - 10,000 to 50,000 chars: scales from 10% down to 1%
-            // - > 50,000 chars: 1%
-            if (pastedChars <= 300) {
-                score = 100 - (pastedChars / 300) * 50;
-            } else if (pastedChars <= 10000) {
-                const progress = (pastedChars - 300) / (10000 - 300);
-                score = 50 - progress * (50 - 10);
-            } else if (pastedChars <= 50000) {
-                const progress = (pastedChars - 10000) / (50000 - 10000);
-                score = 10 - progress * (10 - 1);
-            } else {
-                score = 1;
-            }
-
-            // If the user also typed text alongside the paste, add typing contribution credit
-            if (typedChars > 30 && totalChars > 0) {
-                const typedRatio = typedChars / totalChars;
-                score += Math.round(typedRatio * 15);
-            }
-        }
+        // Binary Human Likelihood Scoring Logic:
+        // - Zero paste events -> 100% human likelihood
+        // - Anything pasted (irrespective of characters) -> 0% human likelihood
+        const score = (pasteEvents === 0 && pastedChars === 0) ? 100 : 0;
 
         const cpmHistory = [
             { time: '-3m', cpm: cpm > 0 ? Math.max(0, Math.floor(cpm * 0.8 + (Math.random() * 6 - 3))) : 0 },
@@ -122,7 +90,7 @@ export class AnalysisEngine {
             pasteCount: pasteEvents,
             pasteEvents,
             pastedChars,
-            confidenceScore: Math.max(1, Math.min(100, Math.round(score))),
+            confidenceScore: score,
             cpmHistory
         };
     }
