@@ -201,7 +201,7 @@ export const SessionHistory = ({ userId }: SessionHistoryProps) => {
                                     <strong style={{ color: '#fff' }}>
                                         Pastes:
                                     </strong>{' '}
-                                    {session.analysis.pasteCount} chunks
+                                    {session.analysis.pasteEvents ?? session.analysis.pasteCount} events
                                 </div>
 
                                 <div>

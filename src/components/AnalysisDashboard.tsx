@@ -23,7 +23,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ result, is
                     <h2>Authentication Analysis</h2>
                     <p>Real-time behavioral signatures</p>
                 </div>
-                {result.cpm > 0 && !isRecording && (
+                {(result.cpm > 0 || result.pasteEvents > 0) && !isRecording && (
                      <div className="status-badge" style={{ background: `${statusColor}20`, color: statusColor, borderColor: `${statusColor}40`, padding: '8px 20px', fontSize: '1rem'}}>
                          {result.confidenceScore >= 80 ? <CheckCircle size={18}/> : <AlertTriangle size={18}/>}
                          Confidence: {result.confidenceScore}%
@@ -31,7 +31,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ result, is
                 )}
             </div>
 
-            {result.cpm === 0 && !isRecording ? (
+            {result.cpm === 0 && result.pasteEvents === 0 && result.pastedChars === 0 && !isRecording ? (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
                     Start a session and type some text to see analysis...
                 </div>
@@ -61,7 +61,12 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ result, is
                             <FileWarning size={16} /> Paste Events
                         </div>
                         <div className="metric-value">
-                            {result.pasteCount}
+                            {result.pasteEvents}
+                            {result.pastedChars > 0 && (
+                                <span className="metric-unit" style={{ fontSize: '0.8rem', marginLeft: '6px', opacity: 0.8 }}>
+                                    ({result.pastedChars.toLocaleString()} chars)
+                                </span>
+                            )}
                         </div>
                     </div>
 
